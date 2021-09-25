@@ -1,4 +1,4 @@
-# SoCS2122-O-Day-Demo
+# SoCS2122 O'Day Demo
 
 Read before proceeding!
 
