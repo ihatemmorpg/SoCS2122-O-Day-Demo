@@ -4,6 +4,8 @@ import time as t
 import tkinter as tk
 from datetime import *
 import numpy as np
+import pyglet
+import colorsys
 
 def make_rot_matrix(theta):
     theta = np.radians(theta)
@@ -13,6 +15,12 @@ def make_rot_matrix(theta):
         [-s,-c]],
         dtype=float
     )
+
+def HSV2RGB(H,S,V):
+    r = colorsys.hsv_to_rgb(H,S,V)
+    r = ''.join([f'{hex(int(i*255))[2:]:0>2}' for i in r])
+
+    return r
 
 class Hand:
     def __init__(self, length, width, rot, **kwargs):
@@ -40,7 +48,9 @@ class Hand:
         self = self.__init__(self.length, self.width, angle, **self.kwargs)
 
 root = tk.Tk()
-root.geometry('600x600')
+root.geometry('1200x600')
+root.title("SoCS O'Day Demo")
+root.resizable(0,0)
 
 # Drawing the clock face
 CLOCKFACE_POS = {'x':100, 'y':50}
@@ -50,6 +60,7 @@ ORIGIN = np.full(2,CLOCKFACE_SIDE//2+1)
 LINE_SMALL = 10
 LINE_LARGE = 25
 CENTER_RADIUS = 5
+NUMBER_DIST_FROM_CIRCUMFERENCE = 50
 
 clockface = tk.Canvas(root,bg='#00FF00',width=CLOCKFACE_SIDE,height=CLOCKFACE_SIDE)
 clockface.create_oval(
@@ -58,6 +69,9 @@ clockface.create_oval(
 )
 
 # Drawing the marks
+numbers = list(range(4,12+1))+list(range(1,3+1))
+numbers.reverse()
+
 for i in range(60):
 
     rot_matrix = make_rot_matrix(i*6)
@@ -71,7 +85,14 @@ for i in range(60):
             *list(ORIGIN+circum),
             *list(ORIGIN+tick)
         )
+        tick = circum - np.dot(rot_matrix,np.array([NUMBER_DIST_FROM_CIRCUMFERENCE,0]))
+        clockface.create_text(
+            *list(ORIGIN+tick),
+            text = numbers[i//5],
+            font = ("Comic Sans MS", "24", "bold italic")
+        )
         continue
+        
 
     tick = circum - np.dot(rot_matrix,np.array([LINE_SMALL,0]))
     clockface.create_line(
@@ -88,12 +109,33 @@ SecondHand = Hand(175,2,-162,fill='#EE6622')
 CenterDot = clockface.create_oval(
     *(ORIGIN-CENTER_RADIUS),
     *(ORIGIN+CENTER_RADIUS-1),
-    fill='#000000'
+    fill='#FF0000',
+    outline='#FF0000'
     )
 
 clockface.place(**CLOCKFACE_POS)
 
+# Digital Clock Face
+pyglet.font.add_file(r"D:\School Stuff\F.5\ECAs\SoCS\SoCS 2021-22 O'Day Demo\assets\fonts-DSEG_v046\DSEG7-Modern\DSEG7Modern-BoldItalic.ttf")
+digital_font = ("DSEG7 Modern","50")
+
+digital_display_frame = tk.Frame(root)
+
+digitalHour = tk.Label(digital_display_frame,text='00',font=digital_font)
+digitalMinute = tk.Label(digital_display_frame,text='00',font=digital_font)
+digitalSecond = tk.Label(digital_display_frame,text='00',font=digital_font)
+colon1 = tk.Label(digital_display_frame,text=':',font=digital_font)
+colon2 = tk.Label(digital_display_frame,text=':',font=digital_font)
+
+digitalHour.grid(row=0,column=0)
+colon1.grid(row=0,column=1)
+digitalMinute.grid(row=0,column=2)
+colon2.grid(row=0,column=3)
+digitalSecond.grid(row=0,column=4)
+digital_display_frame.place(x=550,y=100)
+
 # Actually *running* the clock
+c = 0
 while 1:
 
     timenow = t.localtime()
@@ -101,6 +143,12 @@ while 1:
     minute = timenow.tm_min
     second = timenow.tm_sec
     second += t.time_ns()/1e9 - t.time_ns()//1e9
+    if int(2*second) % 2:
+        colon1.config(text=' ')
+        colon2.config(text=' ')
+    else:
+        colon1.config(text=':')
+        colon2.config(text=':')
 
     HourHand_degrees = second*0.5/60 + minute*0.5 + hour*30
     MinuteHand_degrees = minute*6 + second/10
@@ -110,7 +158,12 @@ while 1:
     MinuteHand.rotate(-MinuteHand_degrees+90)
     SecondHand.rotate(-SecondHand_degrees+90)
 
+    digitalHour.config(text=f'{hour:02}')
+    digitalMinute.config(text=f'{minute:02}')
+    digitalSecond.config(text=f'{int(second):02}')
+
     clockface.tag_raise(CenterDot)
 
     root.update()
     root.update_idletasks()
+    c += 1
