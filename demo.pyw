@@ -117,7 +117,7 @@ CenterDot = clockface.create_oval(
 clockface.place(**CLOCKFACE_POS)
 
 # Digital Clock Face
-pyglet.font.add_file(r"D:\School Stuff\F.5\ECAs\SoCS\SoCS 2021-22 O'Day Demo\assets\fonts-DSEG_v046\DSEG7-Modern\DSEG7Modern-BoldItalic.ttf")
+pyglet.font.add_file(r"./assets/fonts-DSEG_v046\DSEG7-Modern/DSEG7Modern-BoldItalic.ttf")
 digital_font = ("DSEG7 Modern","15")
 
 digital_display_frame = tk.Frame(root)
