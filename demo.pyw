@@ -48,9 +48,10 @@ class Hand:
         self = self.__init__(self.length, self.width, angle, **self.kwargs)
 
 root = tk.Tk()
-root.geometry('1200x600')
+root.geometry('600x600')
 root.title("SoCS O'Day Demo")
 root.resizable(0,0)
+root.wm_attributes("-transparentcolor", 'grey')
 
 # Drawing the clock face
 CLOCKFACE_POS = {'x':100, 'y':50}
@@ -117,22 +118,18 @@ clockface.place(**CLOCKFACE_POS)
 
 # Digital Clock Face
 pyglet.font.add_file(r"D:\School Stuff\F.5\ECAs\SoCS\SoCS 2021-22 O'Day Demo\assets\fonts-DSEG_v046\DSEG7-Modern\DSEG7Modern-BoldItalic.ttf")
-digital_font = ("DSEG7 Modern","50")
+digital_font = ("DSEG7 Modern","15")
 
 digital_display_frame = tk.Frame(root)
 
-digitalHour = tk.Label(digital_display_frame,text='00',font=digital_font)
-digitalMinute = tk.Label(digital_display_frame,text='00',font=digital_font)
-digitalSecond = tk.Label(digital_display_frame,text='00',font=digital_font)
-colon1 = tk.Label(digital_display_frame,text=':',font=digital_font)
-colon2 = tk.Label(digital_display_frame,text=':',font=digital_font)
+sep = 45
+digitalHour = clockface.create_text(*(ORIGIN-np.array([sep,80])),text='00',font=digital_font)
+digitalMinute = clockface.create_text(*(ORIGIN-np.array([0,80])),text='00',font=digital_font)
+digitalSecond = clockface.create_text(*(ORIGIN-np.array([-sep,80])),text='00',font=digital_font)
+colon1 = clockface.create_text(*(ORIGIN-np.array([sep/2,80])),text=':',font=digital_font)
+colon2 = clockface.create_text(*(ORIGIN-np.array([-sep/2,80])),text=':',font=digital_font)
 
-digitalHour.grid(row=0,column=0)
-colon1.grid(row=0,column=1)
-digitalMinute.grid(row=0,column=2)
-colon2.grid(row=0,column=3)
-digitalSecond.grid(row=0,column=4)
-digital_display_frame.place(x=550,y=100)
+digital_display_frame.place(x=100,y=100)
 
 # Actually *running* the clock
 c = 0
@@ -143,24 +140,25 @@ while 1:
     minute = timenow.tm_min
     second = timenow.tm_sec
     second += t.time_ns()/1e9 - t.time_ns()//1e9
+
     if int(2*second) % 2:
-        colon1.config(text=' ')
-        colon2.config(text=' ')
+        clockface.itemconfig(colon1,text=' ')
+        clockface.itemconfig(colon2,text=' ')
     else:
-        colon1.config(text=':')
-        colon2.config(text=':')
+        clockface.itemconfig(colon1,text=':')
+        clockface.itemconfig(colon2,text=':')
 
     HourHand_degrees = second*0.5/60 + minute*0.5 + hour*30
     MinuteHand_degrees = minute*6 + second/10
     SecondHand_degrees = second*6
+    
+    clockface.itemconfig(digitalHour,text=f'{hour:02}')
+    clockface.itemconfig(digitalMinute,text=f'{minute:02}')
+    clockface.itemconfig(digitalSecond,text=f'{int(second):02}')
 
     HourHand.rotate(-HourHand_degrees+90)
     MinuteHand.rotate(-MinuteHand_degrees+90)
     SecondHand.rotate(-SecondHand_degrees+90)
-
-    digitalHour.config(text=f'{hour:02}')
-    digitalMinute.config(text=f'{minute:02}')
-    digitalSecond.config(text=f'{int(second):02}')
 
     clockface.tag_raise(CenterDot)
 
