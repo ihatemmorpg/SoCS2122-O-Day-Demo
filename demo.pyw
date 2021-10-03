@@ -18,7 +18,7 @@ def make_rot_matrix(theta):
 
 def HSV2RGB(H,S,V):
     r = colorsys.hsv_to_rgb(H,S,V)
-    r = ''.join([f'{hex(int(i*255))[2:]:0>2}' for i in r])
+    r = ''.join([f'{hex(int(i*255))[2:]:02}' for i in r])
 
     return r
 
@@ -132,7 +132,7 @@ colon2 = clockface.create_text(*(ORIGIN-np.array([-sep/2,80])),text=':',font=dig
 digital_display_frame.place(x=100,y=100)
 
 # Actually *running* the clock
-c = 0
+# c = 0
 while 1:
 
     timenow = t.localtime()
@@ -164,4 +164,4 @@ while 1:
 
     root.update()
     root.update_idletasks()
-    c += 1
+    # c += 1
