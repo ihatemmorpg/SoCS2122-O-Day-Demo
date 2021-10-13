@@ -16,11 +16,25 @@ def make_rot_matrix(theta):
         dtype=float
     )
 
-def HSV2RGB(H,S,V):
-    r = colorsys.hsv_to_rgb(H,S,V)
-    r = ''.join([f'{hex(int(i*255))[2:]:02}' for i in r])
+def invert(rgb):
+    convert = {
+        'SystemButtonFace': '#F0F0ED',
+        'black': '#000000'
+    }
+    if rgb in convert:
+        rgb = convert[rgb]
+    if rgb == '':
+        return ''
+    rgb = int(rgb[1:],16)
+    rgb = int('FFFFFF',16) - rgb
+    rgb = f'#{hex(rgb)[2:].upper():>06}'
+    return rgb
 
-    return r
+# def HSV2RGB(H,S,V):
+#     r = colorsys.hsv_to_rgb(H,S,V)
+#     r = ''.join([f'{hex(int(i*255))[2:]:02}' for i in r])
+
+#     return r
 
 class Hand:
     def __init__(self, length, width, rot, **kwargs):
@@ -51,7 +65,9 @@ root = tk.Tk()
 root.geometry('600x600')
 root.title("SoCS O'Day Demo")
 root.resizable(0,0)
-root.wm_attributes("-transparentcolor", 'grey')
+
+bg = [root]
+fill = []
 
 # Drawing the clock face
 CLOCKFACE_POS = {'x':100, 'y':50}
@@ -64,10 +80,12 @@ CENTER_RADIUS = 5
 NUMBER_DIST_FROM_CIRCUMFERENCE = 50
 
 clockface = tk.Canvas(root,bg='#00FF00',width=CLOCKFACE_SIDE,height=CLOCKFACE_SIDE)
-clockface.create_oval(
+bg.append(clockface)
+clock_circle = clockface.create_oval(
     *(ORIGIN-(RADIUS-1)),
     *(ORIGIN+RADIUS)
 )
+fill.append(clock_circle)
 
 # Drawing the marks
 numbers = list(range(4,12+1))+list(range(1,3+1))
@@ -82,29 +100,33 @@ for i in range(60):
     if not i%5:
         tick = circum - np.dot(rot_matrix,np.array([LINE_LARGE,0]))
 
-        clockface.create_line(
+        fill.append(clockface.create_line(
             *list(ORIGIN+circum),
             *list(ORIGIN+tick)
-        )
+        ))
         tick = circum - np.dot(rot_matrix,np.array([NUMBER_DIST_FROM_CIRCUMFERENCE,0]))
-        clockface.create_text(
+        fill.append(clockface.create_text(
             *list(ORIGIN+tick),
             text = numbers[i//5],
             font = ("Comic Sans MS", "24", "bold italic")
-        )
+        ))
         continue
         
 
     tick = circum - np.dot(rot_matrix,np.array([LINE_SMALL,0]))
-    clockface.create_line(
+    fill.append(clockface.create_line(
         *list(ORIGIN+circum+0.5),
         *list(ORIGIN+tick+0.5)
-    )
+    ))
 
 # Drawing the hour, minute and second hands
-HourHand = Hand(80,10,60)
-MinuteHand = Hand(130,5,90,fill='#3366FF')
-SecondHand = Hand(175,2,-162,fill='#EE6622')
+hands = []
+HourHand = Hand(length=80,width=10,rot=6,fill='#000000')
+MinuteHand = Hand(length=160,width=5,rot=9,fill='#3366FF')
+SecondHand = Hand(length=175,width=2,rot=420,fill='#EE6622')
+hands.append(HourHand)
+hands.append(MinuteHand)
+hands.append(SecondHand)
 
 # Creating the center dot
 CenterDot = clockface.create_oval(
@@ -113,6 +135,7 @@ CenterDot = clockface.create_oval(
     fill='#FF0000',
     outline='#FF0000'
     )
+fill.append(CenterDot)
 
 clockface.place(**CLOCKFACE_POS)
 
@@ -129,10 +152,40 @@ digitalSecond = clockface.create_text(*(ORIGIN-np.array([-sep,80])),text='00',fo
 colon1 = clockface.create_text(*(ORIGIN-np.array([sep/2,80])),text=':',font=digital_font)
 colon2 = clockface.create_text(*(ORIGIN-np.array([-sep/2,80])),text=':',font=digital_font)
 
+fill.append(digitalHour)
+fill.append(digitalMinute)
+fill.append(digitalSecond)
+fill.append(colon1)
+fill.append(colon2)
+
 digital_display_frame.place(x=100,y=100)
 
+# Dark mode
+def dark_mode():
+    global bg, fill, dark, dark_mode_btn
+    dark = not dark
+    if dark:
+        dark_mode_btn['text'] = 'Light Mode'
+    else:
+        dark_mode_btn['text'] = 'Dark Mode'
+    for item in bg:
+        color = item['bg']
+        color = invert(color)
+        item['bg'] = color
+    for item in fill:
+        color = clockface.itemcget(item,'fill')
+        color = invert(color)
+        clockface.itemconfig(item,fill=color)
+    for hand in hands:
+        color = hand.kwargs['fill']
+        color = invert(color)
+        hand.kwargs['fill'] = color
+
+dark = False
+dark_mode_btn = tk.Button(root,text='Dark Mode',command=dark_mode)
+dark_mode_btn.place(x=265,y=500)
+
 # Actually *running* the clock
-# c = 0
 while 1:
 
     timenow = t.localtime()
@@ -164,4 +217,3 @@ while 1:
 
     root.update()
     root.update_idletasks()
-    # c += 1
