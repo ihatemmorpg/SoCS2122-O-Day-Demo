@@ -3,3 +3,4 @@ tempCodeRunnerFile.*
 *.spec
 build/
 __pycache__/
+*.exe
