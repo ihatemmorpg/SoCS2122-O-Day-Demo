@@ -1,2 +1,5 @@
 tempCodeRunnerFile.*
 *.code-workspace
+*.spec
+build/
+__pycache__/
